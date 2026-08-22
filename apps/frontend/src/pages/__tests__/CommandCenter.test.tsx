@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock Leaflet
 vi.mock('leaflet', () => ({
@@ -40,50 +41,59 @@ describe('CommandCenter Dashboard Component', () => {
     cleanup();
   });
 
-  it('renders all 8 emergency dashboard sections and header', () => {
-    render(<CommandCenter />);
+  it('renders operations center header and navigation tabs', () => {
+    render(
+      <BrowserRouter>
+        <CommandCenter />
+      </BrowserRouter>
+    );
 
     // Header
-    expect(screen.getByText(/RescuENet Command Center/i)).toBeDefined();
+    expect(screen.getByText(/RESCUENet COMMAND CENTER/i)).toBeDefined();
+    expect(screen.getByText(/SYSTEM ● OPERATIONAL/i)).toBeDefined();
 
-    // 8 Section Headings
-    expect(screen.getByText(/1\. Live Disaster Operations Map/i)).toBeDefined();
-    expect(screen.getByText(/2\. Active Incidents Feed/i)).toBeDefined();
-    expect(screen.getByText(/3\. Incident Details/i)).toBeDefined();
-    expect(screen.getByText(/4\. Behavioral AI Analysis/i)).toBeDefined();
-    expect(screen.getByText(/5\. Consensus Evidence/i)).toBeDefined();
-    expect(screen.getByText(/6\. Real-Time Packet Propagation Trail/i)).toBeDefined();
-    expect(screen.getByText(/7\. Field Gateway Status/i)).toBeDefined();
-    expect(screen.getByText(/8\. Mesh Network & Relay Nodes/i)).toBeDefined();
-  });
-
-  it('renders KPI metrics (Active Incidents, Gateways, Nodes, Ingested Packets)', () => {
-    render(<CommandCenter />);
-
+    // Navigation Tabs
+    expect(screen.getByText(/Overview/i)).toBeDefined();
     expect(screen.getAllByText(/Active Incidents/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Connected Gateways/i)).toBeDefined();
-    expect(screen.getByText(/Active Mesh Nodes/i)).toBeDefined();
-    expect(screen.getByText(/Total Ingested Packets/i)).toBeDefined();
+    expect(screen.getByText(/Live Map/i)).toBeDefined();
+    expect(screen.getByText(/Network & Mesh/i)).toBeDefined();
+    expect(screen.getByText(/AI & Consensus/i)).toBeDefined();
   });
 
-  it('injects scenario incident when clicking demo button', () => {
-    render(<CommandCenter />);
+  it('renders top KPI metrics (Active Incidents, Critical Alerts, Connected Nodes, Gateways)', () => {
+    render(
+      <BrowserRouter>
+        <CommandCenter />
+      </BrowserRouter>
+    );
 
-    const sosBtn = screen.getByText(/Manual SOS Beacon/i);
-    fireEvent.click(sosBtn);
-
-    // Verify incident cards and selection
-    expect(screen.getAllByText(/SOS/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/✓ Mark Incident as RESOLVED/i)).toBeDefined();
+    expect(screen.getAllByText(/ACTIVE INCIDENTS/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/CRITICAL ALERTS/i)).toBeDefined();
+    expect(screen.getByText(/CONNECTED NODES/i)).toBeDefined();
+    expect(screen.getByText(/GATEWAYS ONLINE/i)).toBeDefined();
   });
 
-  it('toggles mode between DEMO and AUTHORITATIVE LIVE FEED', () => {
-    render(<CommandCenter />);
+  it('renders tactical 3-column workspace with active incident feed and telemetry', () => {
+    render(
+      <BrowserRouter>
+        <CommandCenter />
+      </BrowserRouter>
+    );
 
-    const modeBtn = screen.getByText(/DEMO SIMULATION MODE/i);
-    expect(modeBtn).toBeDefined();
+    expect(screen.getByText(/Active Incident Stream/i)).toBeDefined();
+    expect(screen.getByText(/Tactical Disaster Geospatial Grid/i)).toBeDefined();
+    expect(screen.getByText(/Incident Telemetry/i)).toBeDefined();
+  });
 
-    fireEvent.click(modeBtn);
-    expect(screen.getByText(/AUTHORITATIVE LIVE FEED/i)).toBeDefined();
+  it('renders animated packet propagation hop chain graph', () => {
+    render(
+      <BrowserRouter>
+        <CommandCenter />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText(/Deterministic Packet Propagation Graph/i)).toBeDefined();
+    expect(screen.getByText(/Node A \(Origin\)/i)).toBeDefined();
+    expect(screen.getByText(/Authoritative Backend/i)).toBeDefined();
   });
 });

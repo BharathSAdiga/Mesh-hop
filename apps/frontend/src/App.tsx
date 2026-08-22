@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MainLayout } from './layouts/MainLayout';
+import { CitizenLayout } from './layouts/CitizenLayout';
 import { Home } from './pages/Home';
 import { SOS } from './pages/SOS';
 import { Report } from './pages/Report';
@@ -20,24 +20,29 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
+        {/* Citizen Emergency PWA Experience */}
+        <Route path="/" element={<CitizenLayout />}>
           <Route index element={<Home />} />
           <Route path="home" element={<Home />} />
-          <Route path="command-center" element={<CommandCenter />} />
           <Route path="sos" element={<SOS />} />
           <Route path="report" element={<Report />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="safe-zones" element={<SafeZones />} />
           <Route path="instructions" element={<Instructions />} />
           <Route path="network" element={<Network />} />
-          <Route path="demo" element={<Demo />} />
-          <Route path="ai-simulation" element={<AISimulation />} />
-          <Route path="consensus-simulator" element={<ConsensusSimulator />} />
-          <Route path="transport-simulator" element={<TransportSimulator />} />
-          <Route path="store-carry-forward" element={<StoreCarryForwardSimulator />} />
-          <Route path="gateway-simulator" element={<GatewaySimulator />} />
           <Route path="queue" element={<OfflineQueue />} />
         </Route>
+
+        {/* Tactical Command Center Experience */}
+        <Route path="/command-center" element={<CommandCenter />} />
+
+        {/* Demo & Engineering Simulators */}
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/ai-simulation" element={<AISimulation />} />
+        <Route path="/consensus-simulator" element={<ConsensusSimulator />} />
+        <Route path="/transport-simulator" element={<TransportSimulator />} />
+        <Route path="/store-carry-forward" element={<StoreCarryForwardSimulator />} />
+        <Route path="/gateway-simulator" element={<GatewaySimulator />} />
       </Routes>
     </BrowserRouter>
   );

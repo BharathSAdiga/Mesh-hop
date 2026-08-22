@@ -3,6 +3,14 @@ import type { Priority, Location } from '@rescuenet/shared';
 import { LocationService } from '../services/LocationService';
 import { ReportService } from '../services/ReportService';
 import type { ReportEventType, DisasterReport, AcknowledgementState } from '../services/ReportService';
+import { 
+  AlertTriangleIcon, 
+  MapPinIcon, 
+  ShieldIcon, 
+  CheckCircleIcon, 
+  ArrowRightIcon, 
+  RefreshCwIcon 
+} from '../components/Icons';
 
 export function Report() {
   const [selectedEvent, setSelectedEvent] = useState<ReportEventType | null>('STRUCTURAL_COLLAPSE');
@@ -22,40 +30,39 @@ export function Report() {
       type: 'STRUCTURAL_COLLAPSE',
       label: 'Structural Collapse',
       icon: '🏢',
-      desc: 'Building, bridge, or tunnel structural failure or rubble entrapment',
+      desc: 'Building, bridge, or rubble failure with entrapment hazard',
       defaultSeverity: 'CRITICAL',
     },
     {
       type: 'STAMPEDE',
-      label: 'Stampede / Crowd Panic',
+      label: 'Stampede / Crowd Surge',
       icon: '🏃',
-      desc: 'Mass crowd crush, surge, or uncontrolled panic bottleneck',
+      desc: 'Mass crowd crush, panic rush, or dangerous bottleneck',
       defaultSeverity: 'HIGH',
     },
     {
       type: 'FIRE',
       label: 'Fire Hazard',
       icon: '🔥',
-      desc: 'Structure fire, intense blaze, or smoke inhalation threat',
+      desc: 'Active blaze, toxic smoke, or explosion hazard',
       defaultSeverity: 'CRITICAL',
     },
     {
       type: 'FLOOD',
-      label: 'Flood / Water Ingress',
+      label: 'Flood / Water Surge',
       icon: '🌊',
-      desc: 'Flash flooding, dam breach, or rapidly rising water levels',
+      desc: 'Flash flooding, water ingress, or trapped vehicles',
       defaultSeverity: 'HIGH',
     },
     {
       type: 'GENERAL_EMERGENCY',
       label: 'General Emergency',
       icon: '⚠️',
-      desc: 'Acute medical emergency, landslide, or unspecified disaster',
+      desc: 'Severe casualty triage or unspecified catastrophe',
       defaultSeverity: 'MEDIUM',
     },
   ];
 
-  // Fetch location on mount or when toggle is active
   useEffect(() => {
     if (withLocation) {
       requestLocation();
@@ -95,7 +102,6 @@ export function Report() {
       setSubmittedReport(report);
       setAcknowledgement(report.acknowledgementState);
 
-      // Simulate progressing acknowledgement to CONFIRMED over 1.5s
       setTimeout(() => {
         setAcknowledgement('PROCESSING');
         ReportService.updateAcknowledgement(report.reportId, 'PROCESSING');
@@ -117,40 +123,44 @@ export function Report() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-10">
+    <div className="space-y-4 max-w-2xl mx-auto pb-8">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-          <span>🚨</span> Disaster Incident Report
-        </h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Submit field disaster observations directly to the local mesh network, nearby gateways, and Command Center.
+        <div className="flex items-center space-x-2">
+          <span className="p-1.5 rounded-lg bg-orange-950/80 border border-orange-800/80 text-orange-400">
+            <AlertTriangleIcon size={18} />
+          </span>
+          <h1 className="text-xl font-black text-white tracking-tight">Disaster Incident Report</h1>
+        </div>
+        <p className="text-xs text-slate-400 mt-1">
+          Broadcast tactical observations directly across local peer devices, field gateways, and Command Center.
         </p>
       </div>
 
       {submittedReport ? (
         /* Post-Submission Acknowledgement Card */
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-md space-y-5">
-          <div className="flex items-center justify-between border-b pb-3">
+        <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
             <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-              <h3 className="font-bold text-gray-900 text-base">Report Dispatched to Mesh</h3>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <h2 className="font-bold text-white text-sm">Dispatched to Mesh Transport</h2>
             </div>
-            <span className="text-xs font-mono bg-gray-100 text-gray-700 px-2.5 py-1 rounded font-bold">
+            <span className="text-xs font-mono bg-slate-950 text-cyan-400 border border-slate-800 px-2 py-0.5 rounded font-bold">
               {submittedReport.reportId}
             </span>
           </div>
 
-          {/* Acknowledgement Status Timeline */}
+          {/* Acknowledgement State Timeline */}
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase text-gray-400 block tracking-wider">
-              Acknowledgement State
+            <span className="text-[10px] font-bold font-mono uppercase text-slate-400 block tracking-wider">
+              Acknowledgement State Machine
             </span>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {[
                 { state: 'RECEIVED', label: '1. Received', desc: 'Packed into Mesh Packet' },
-                { state: 'PROCESSING', label: '2. Processing', desc: 'Routing via Hop Chain' },
+                { state: 'PROCESSING', label: '2. Routing', desc: 'Multi-Hop Relay Chain' },
                 { state: 'CONFIRMED', label: '3. Confirmed', desc: 'Gateway & Backend Sync' },
-                { state: 'RESOLVED', label: '4. Resolved', desc: 'Response Dispatched' },
+                { state: 'RESOLVED', label: '4. Resolved', desc: 'Response Units Dispatched' },
               ].map((step) => {
                 const isCurrent = acknowledgement === step.state;
                 const isPassed =
@@ -161,173 +171,182 @@ export function Report() {
                 return (
                   <div
                     key={step.state}
-                    className={`p-3 rounded-xl border text-center transition font-mono ${
-                      isPassed
-                        ? 'border-green-300 bg-green-50 text-green-800'
-                        : isCurrent
-                        ? 'border-blue-400 bg-blue-50 text-blue-800 ring-2 ring-blue-300'
-                        : 'border-gray-200 bg-gray-50 text-gray-400'
+                    className={`p-2.5 rounded-xl border transition ${
+                      isCurrent
+                        ? 'border-emerald-500 bg-emerald-950/40 text-emerald-300 ring-1 ring-emerald-500/40 font-bold'
+                        : isPassed
+                        ? 'border-slate-800 bg-slate-950/60 text-slate-300'
+                        : 'border-slate-900 bg-slate-950/30 text-slate-600'
                     }`}
                   >
-                    <div className="font-bold text-xs">{step.label}</div>
-                    <div className="text-[10px] mt-0.5 text-gray-500 font-sans">{step.desc}</div>
+                    <div className="flex items-center space-x-1">
+                      {isPassed && <CheckCircleIcon size={12} className="text-emerald-400 shrink-0" />}
+                      <span className="text-[11px] font-mono">{step.label}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">{step.desc}</p>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Report Summary Details */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs space-y-2 font-sans">
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono space-y-1.5 text-slate-400">
             <div className="flex justify-between">
-              <span className="text-gray-500">Incident Type:</span>
-              <strong className="text-gray-900">{submittedReport.eventType}</strong>
+              <span>Event:</span>
+              <span className="text-white font-bold">{submittedReport.eventType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Severity:</span>
-              <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
-                submittedReport.priority === 'CRITICAL' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
-              }`}>
-                {submittedReport.priority}
-              </span>
+              <span>Severity:</span>
+              <span className="text-red-400 font-bold">{submittedReport.priority}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Location:</span>
-              <span className="font-mono text-gray-700">
+              <span>Location:</span>
+              <span className="text-slate-200">
                 {submittedReport.location
-                  ? `${submittedReport.location.latitude.toFixed(4)}, ${submittedReport.location.longitude.toFixed(4)}`
-                  : 'Coordinates Omitted'}
+                  ? `${submittedReport.location.latitude.toFixed(3)}, ${submittedReport.location.longitude.toFixed(3)}`
+                  : 'Omitted (Permission Optional)'}
               </span>
             </div>
-            {submittedReport.description && (
-              <div className="pt-2 border-t text-gray-700">
-                <span className="font-bold block text-gray-500 mb-0.5">Description:</span>
-                {submittedReport.description}
-              </div>
-            )}
           </div>
 
-          {/* Transmission Pipeline Diagram */}
-          <div className="bg-gray-900 text-white p-3.5 rounded-xl text-xs font-mono space-y-2">
-            <div className="text-cyan-400 font-bold text-[11px]">Active Transmission Pipeline</div>
-            <div className="text-gray-300 flex items-center justify-between text-[11px]">
-              <span>Report</span> ➔ <span>Packet</span> ➔ <span>Local IDB</span> ➔ <span>Mesh Transport</span> ➔ <span>Gateway</span> ➔ <span>Backend</span>
-            </div>
-          </div>
-
-          <div className="flex space-x-3 pt-2">
-            <button
-              onClick={handleResetForm}
-              className="flex-1 py-3 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm rounded-xl transition shadow-sm"
-            >
-              Submit Another Report
-            </button>
-          </div>
+          <button
+            onClick={handleResetForm}
+            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2 text-xs"
+          >
+            <RefreshCwIcon size={14} />
+            <span>Submit Another Incident Report</span>
+          </button>
         </div>
       ) : (
-        /* Report Form */
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
-          {/* 1. Disaster Event Type Selection */}
-          <div className="space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
-              1. Select Disaster Category <span className="text-red-500">*</span>
+        /* The Report Submission Form */
+        <form onSubmit={handleSubmit} className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+          {/* Disaster Category Selection */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-200 block uppercase font-mono tracking-wider">
+              1. Select Disaster Category
             </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {disasterTypes.map((evt) => {
-                const isSelected = selectedEvent === evt.type;
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {disasterTypes.map((dt) => {
+                const isSelected = selectedEvent === dt.type;
                 return (
-                  <div
-                    key={evt.type}
+                  <button
+                    type="button"
+                    key={dt.type}
                     onClick={() => {
-                      setSelectedEvent(evt.type);
-                      setSeverity(evt.defaultSeverity);
+                      setSelectedEvent(dt.type);
+                      setSeverity(dt.defaultSeverity);
                     }}
-                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition flex items-start space-x-3 ${
+                    className={`p-3 rounded-xl border text-left transition flex items-start space-x-2.5 ${
                       isSelected
-                        ? 'border-red-600 bg-red-50/60 shadow-sm ring-2 ring-red-300'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-orange-500 bg-orange-950/40 text-white ring-1 ring-orange-500/40'
+                        : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
-                    <span className="text-2xl">{evt.icon}</span>
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-gray-900 text-sm">{evt.label}</div>
-                      <div className="text-[11px] text-gray-500 leading-tight">{evt.desc}</div>
+                    <span className="text-2xl shrink-0">{dt.icon}</span>
+                    <div>
+                      <h3 className="text-xs font-bold text-white">{dt.label}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{dt.desc}</p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 2. Severity Tier */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
-              2. Hazard Severity Level
+          {/* Severity Selector */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <label className="text-xs font-bold text-slate-200 block uppercase font-mono tracking-wider">
+              2. Hazard Severity Tier
             </label>
             <div className="grid grid-cols-4 gap-2">
-              {(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as Priority[]).map((lvl) => (
-                <button
-                  type="button"
-                  key={lvl}
-                  onClick={() => setSeverity(lvl)}
-                  className={`py-2 px-1 text-xs font-bold rounded-lg border transition ${
-                    severity === lvl
-                      ? lvl === 'CRITICAL'
-                        ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                        : lvl === 'HIGH'
-                        ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                        : lvl === 'MEDIUM'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-gray-600 text-white border-gray-600 shadow-sm'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  {lvl}
-                </button>
-              ))}
+              {(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as Priority[]).map((p) => {
+                const isSelected = severity === p;
+                return (
+                  <button
+                    type="button"
+                    key={p}
+                    onClick={() => setSeverity(p)}
+                    className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase border transition ${
+                      isSelected
+                        ? p === 'CRITICAL'
+                          ? 'bg-red-950 border-red-500 text-red-300 ring-1 ring-red-500/40'
+                          : p === 'HIGH'
+                          ? 'bg-orange-950 border-orange-500 text-orange-300 ring-1 ring-orange-500/40'
+                          : p === 'MEDIUM'
+                          ? 'bg-yellow-950 border-yellow-500 text-yellow-300 ring-1 ring-yellow-500/40'
+                          : 'bg-blue-950 border-blue-500 text-blue-300 ring-1 ring-blue-500/40'
+                        : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* 3. Description Notes */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
-              3. Description / Critical Field Observations
+          {/* Field Description */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <label className="text-xs font-bold text-slate-200 block uppercase font-mono tracking-wider">
+              3. Field Notes / Details (Optional)
             </label>
             <textarea
-              rows={3}
+              rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide specific details: number of victims, structural conditions, hazards..."
-              className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-gray-50"
+              placeholder="e.g. 2nd floor stairwell collapsed, 4 people trapped near north exit..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-orange-500"
             />
           </div>
 
-          {/* 4. Permission-Based Location */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <span className="text-xs font-bold text-gray-800 block">Include Precise GPS Coordinates</span>
-                <span className="text-[11px] text-gray-500">Requires device location permission</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={withLocation}
-                onChange={(e) => setWithLocation(e.target.checked)}
-                className="w-5 h-5 accent-red-600 rounded cursor-pointer"
-              />
+          {/* Location Permission Toggle */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                <MapPinIcon size={14} className="text-cyan-400" />
+                <span>4. Attach Approximate Location</span>
+              </label>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                OPTIONAL
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setWithLocation(true)}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-1.5 transition ${
+                  withLocation
+                    ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-300 ring-1 ring-emerald-500/40'
+                    : 'bg-slate-950 border-slate-800 text-slate-400'
+                }`}
+              >
+                <MapPinIcon size={13} />
+                <span>Attach GPS</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setWithLocation(false)}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-1.5 transition ${
+                  !withLocation
+                    ? 'bg-slate-800 border-slate-500 text-white ring-1 ring-slate-500/40'
+                    : 'bg-slate-950 border-slate-800 text-slate-400'
+                }`}
+              >
+                <ShieldIcon size={13} />
+                <span>Omit Coordinates</span>
+              </button>
             </div>
 
             {withLocation && (
-              <div className="text-xs font-mono pt-2 border-t border-gray-200 text-gray-600">
+              <div className="text-[11px] font-mono text-slate-400 pt-1">
                 {isLocating ? (
-                  <span className="text-blue-600 animate-pulse">📡 Acquiring GPS fix...</span>
+                  <span className="text-cyan-400 animate-pulse">Acquiring GPS fix...</span>
                 ) : locationCoords ? (
-                  <span className="text-green-700">
-                    ✓ GPS Fixed: {locationCoords.latitude.toFixed(4)}, {locationCoords.longitude.toFixed(4)} (±{locationCoords.accuracy?.toFixed(0) || 5}m)
-                  </span>
+                  <span className="text-emerald-400">✓ GPS Acquired: {locationCoords.latitude.toFixed(3)}, {locationCoords.longitude.toFixed(3)}</span>
                 ) : permissionDenied ? (
-                  <span className="text-orange-600">⚠️ Location unavailable or permission denied. Report will send without coordinates.</span>
+                  <span className="text-amber-400">⚠️ GPS unavailable / denied. Will transmit without coordinates.</span>
                 ) : null}
               </div>
             )}
@@ -336,14 +355,18 @@ export function Report() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!selectedEvent || isSubmitting}
-            className={`w-full py-4 rounded-xl font-bold text-base transition shadow-md flex items-center justify-center gap-2 ${
-              selectedEvent && !isSubmitting
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl shadow-lg shadow-orange-950/50 transition flex items-center justify-center space-x-2 text-xs uppercase tracking-wider"
           >
-            {isSubmitting ? 'Dispatching to Mesh Network...' : '🚨 Broadcast Disaster Report'}
+            {isSubmitting ? (
+              <RefreshCwIcon size={16} className="animate-spin" />
+            ) : (
+              <>
+                <AlertTriangleIcon size={16} />
+                <span>Broadcast Incident Report</span>
+                <ArrowRightIcon size={14} />
+              </>
+            )}
           </button>
         </form>
       )}
