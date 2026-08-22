@@ -11,14 +11,19 @@ dotenv.config({ path: '../../.env' });
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rescuenet';
 
+// Initialize Socket.io instance with placeholder server
+let ioInstance: Server | null = null;
 const server = http.createServer();
 const io = new Server(server, {
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
   },
 });
+ioInstance = io;
 
-const app = createApp(io);
+const app = createApp(ioInstance);
+// Delegate HTTP requests to express app
+server.removeAllListeners('request');
 server.on('request', app);
 
 io.on('connection', (socket) => {
@@ -54,11 +59,11 @@ io.on('connection', (socket) => {
 async function startServer() {
   try {
     await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000,
+      serverSelectionTimeoutMS: 2000,
     });
     console.log(`[Backend DB] Connected to MongoDB at ${MONGODB_URI}`);
   } catch (err) {
-    console.warn(`[Backend DB] MongoDB connection skipped or failed: ${err}. Running with in-memory fallbacks.`);
+    console.warn(`[Backend DB] MongoDB connection skipped or unavailable. Running with in-memory fallbacks.`);
   }
 
   server.listen(PORT, () => {
