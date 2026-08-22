@@ -183,6 +183,99 @@ export function CommandCenter() {
     setTotalPacketsIngested(230);
   }, []);
 
+  // Packet Propagation Trail Animation
+  const triggerPropagationAnimation = (packetId: string, originNodeId: string = 'NODE_A') => {
+    const hops: PacketHop[] = [
+      { nodeId: originNodeId, label: 'Node A (Origin)', role: 'ORIGIN', status: 'TRANSMITTING', timestamp: Date.now() },
+      { nodeId: 'NODE_RELAY_B', label: 'Node B (Relay Hop 1)', role: 'RELAY', status: 'WAITING', timestamp: Date.now() + 300 },
+      { nodeId: 'NODE_RELAY_C', label: 'Node C (Relay Hop 2)', role: 'RELAY', status: 'WAITING', timestamp: Date.now() + 600 },
+      { nodeId: 'GW-SECTOR-NORTH', label: 'Gateway (Uplink)', role: 'GATEWAY', status: 'WAITING', timestamp: Date.now() + 900 },
+      { nodeId: 'BACKEND_CLOUD', label: 'Command Center Backend', role: 'BACKEND', status: 'WAITING', timestamp: Date.now() + 1200 },
+    ];
+
+    setActivePropagation({
+      packetId,
+      hops,
+      currentStep: 0,
+      isActive: true,
+    });
+
+    // Step-by-step progress animation
+    [1, 2, 3, 4].forEach((step) => {
+      setTimeout(() => {
+        setActivePropagation(prev => {
+          if (!prev.isActive) return prev;
+          const updated = [...prev.hops];
+          for (let i = 0; i < step; i++) {
+            updated[i].status = 'DELIVERED';
+          }
+          if (updated[step]) {
+            updated[step].status = 'TRANSMITTING';
+          }
+          if (step === 4) {
+            updated[4].status = 'DELIVERED';
+          }
+          return { ...prev, hops: updated, currentStep: step };
+        });
+      }, step * 600);
+    });
+
+    setTimeout(() => {
+      setActivePropagation(prev => ({ ...prev, isActive: false }));
+    }, 4500);
+  };
+
+  const handleIncomingIncident = (incoming: any) => {
+    const formatted: CommandCenterIncident = {
+      incidentId: incoming.incidentId || `INC-${uuidv4().slice(0, 6)}`,
+      packetId: incoming.packetId || `PKT-${uuidv4().slice(0, 6)}`,
+      eventType: incoming.eventType || 'SOS',
+      priority: incoming.priority || 'HIGH',
+      status: incoming.status || 'CONFIRMED',
+      location: incoming.location || { latitude: 12.9716 + (Math.random() - 0.5) * 0.02, longitude: 77.5946 + (Math.random() - 0.5) * 0.02 },
+      anomalyScore: incoming.anomalyScore ?? 0.9,
+      consensusScore: incoming.consensusScore ?? 0.85,
+      participatingNodes: incoming.participatingNodes || ['NODE_ALPHA'],
+      timestamp: incoming.timestamp || Date.now(),
+      ttl: incoming.ttl ?? 10,
+      hopCount: incoming.hopCount ?? 2,
+      featureSummary: incoming.featureSummary || { accelPeak: 26.4, gyroMax: 3.1, jerkRate: 150 },
+    };
+
+    setIncidents(prev => [formatted, ...prev.filter(i => i.incidentId !== formatted.incidentId)]);
+    setSelectedIncidentId(formatted.incidentId);
+    triggerPropagationAnimation(formatted.packetId, formatted.participatingNodes[0]);
+  };
+
+  const fetchBackendData = async () => {
+    try {
+      const [incRes, gwRes, nodesRes, pktRes] = await Promise.all([
+        fetch('http://localhost:3000/api/incidents').then(r => (r.ok ? r.json() : null)),
+        fetch('http://localhost:3000/api/gateways').then(r => (r.ok ? r.json() : null)),
+        fetch('http://localhost:3000/api/nodes').then(r => (r.ok ? r.json() : null)),
+        fetch('http://localhost:3000/api/packets').then(r => (r.ok ? r.json() : null)),
+      ]);
+
+      if (incRes && incRes.incidents && incRes.incidents.length > 0) {
+        setIncidents(incRes.incidents);
+        if (!selectedIncidentId) {
+          setSelectedIncidentId(incRes.incidents[0].incidentId);
+        }
+      }
+      if (gwRes && gwRes.gateways) {
+        setGateways(gwRes.gateways);
+      }
+      if (nodesRes && nodesRes.nodes) {
+        setNodes(nodesRes.nodes);
+      }
+      if (pktRes && pktRes.count !== undefined) {
+        setTotalPacketsIngested(pktRes.count);
+      }
+    } catch {
+      // Backend not available, keep existing / demo state
+    }
+  };
+
   // Connect to Live Backend Socket.IO & REST
   useEffect(() => {
     const backendUrl = 'http://localhost:3000';
@@ -233,95 +326,6 @@ export function CommandCenter() {
       socket.disconnect();
     };
   }, [isDemoMode]);
-
-  const fetchBackendData = async () => {
-    try {
-      const [incRes, gwRes, nodesRes, pktRes] = await Promise.all([
-        fetch('http://localhost:3000/api/incidents').then(r => r.ok ? r.json() : null),
-        fetch('http://localhost:3000/api/gateways').then(r => r.ok ? r.json() : null),
-        fetch('http://localhost:3000/api/nodes').then(r => r.ok ? r.json() : null),
-        fetch('http://localhost:3000/api/packets').then(r => r.ok ? r.json() : null),
-      ]);
-
-      if (incRes && incRes.incidents && incRes.incidents.length > 0) {
-        setIncidents(incRes.incidents);
-        if (!selectedIncidentId) {
-          setSelectedIncidentId(incRes.incidents[0].incidentId);
-        }
-      }
-      if (gwRes && gwRes.gateways) {
-        setGateways(gwRes.gateways);
-      }
-      if (nodesRes && nodesRes.nodes) {
-        setNodes(nodesRes.nodes);
-      }
-      if (pktRes && pktRes.count !== undefined) {
-        setTotalPacketsIngested(pktRes.count);
-      }
-    } catch {
-      // Backend not available, keep existing / demo state
-    }
-  };
-
-  const handleIncomingIncident = (incoming: any) => {
-    const formatted: CommandCenterIncident = {
-      incidentId: incoming.incidentId || `INC-${uuidv4().slice(0, 6)}`,
-      packetId: incoming.packetId || `PKT-${uuidv4().slice(0, 6)}`,
-      eventType: incoming.eventType || 'SOS',
-      priority: incoming.priority || 'HIGH',
-      status: incoming.status || 'CONFIRMED',
-      location: incoming.location || { latitude: 12.9716 + (Math.random() - 0.5) * 0.02, longitude: 77.5946 + (Math.random() - 0.5) * 0.02 },
-      anomalyScore: incoming.anomalyScore ?? 0.9,
-      consensusScore: incoming.consensusScore ?? 0.85,
-      participatingNodes: incoming.participatingNodes || ['NODE_ALPHA'],
-      timestamp: incoming.timestamp || Date.now(),
-      ttl: incoming.ttl ?? 10,
-      hopCount: incoming.hopCount ?? 2,
-      featureSummary: incoming.featureSummary || { accelPeak: 26.4, gyroMax: 3.1, jerkRate: 150 },
-    };
-
-    setIncidents(prev => [formatted, ...prev.filter(i => i.incidentId !== formatted.incidentId)]);
-    setSelectedIncidentId(formatted.incidentId);
-    triggerPropagationAnimation(formatted.packetId, formatted.participatingNodes[0]);
-  };
-
-  // Packet Propagation Trail Animation
-  const triggerPropagationAnimation = (packetId: string, originNodeId: string = 'NODE_A') => {
-    const hops: PacketHop[] = [
-      { nodeId: originNodeId, label: 'Node A (Origin)', role: 'ORIGIN', status: 'TRANSMITTING', timestamp: Date.now() },
-      { nodeId: 'NODE_RELAY_B', label: 'Node B (Relay Hop 1)', role: 'RELAY', status: 'WAITING', timestamp: Date.now() + 300 },
-      { nodeId: 'NODE_RELAY_C', label: 'Node C (Relay Hop 2)', role: 'RELAY', status: 'WAITING', timestamp: Date.now() + 600 },
-      { nodeId: 'GW-SECTOR-NORTH', label: 'Gateway (Uplink)', role: 'GATEWAY', status: 'WAITING', timestamp: Date.now() + 900 },
-      { nodeId: 'BACKEND_CLOUD', label: 'Command Center Backend', role: 'BACKEND', status: 'WAITING', timestamp: Date.now() + 1200 },
-    ];
-
-    setActivePropagation({
-      packetId,
-      hops,
-      currentStep: 0,
-      isActive: true,
-    });
-
-    // Step-by-step progress animation
-    [1, 2, 3, 4].forEach((step) => {
-      setTimeout(() => {
-        setActivePropagation(prev => {
-          if (!prev.isActive) return prev;
-          const updated = [...prev.hops];
-          for (let i = 0; i < step; i++) {
-            updated[i].status = 'DELIVERED';
-          }
-          if (updated[step]) {
-            updated[step].status = 'TRANSMITTING';
-          }
-          if (step === 4) {
-            updated[4].status = 'DELIVERED';
-          }
-          return { ...prev, hops: updated, currentStep: step };
-        });
-      }, step * 350);
-    });
-  };
 
   // Demo Trigger Scenarios
   const handleSimulateScenario = (scenario: 'SOS' | 'COLLAPSE' | 'STAMPEDE' | 'FLOOD') => {
