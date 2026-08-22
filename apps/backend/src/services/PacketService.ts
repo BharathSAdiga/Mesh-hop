@@ -2,6 +2,7 @@ import { Packet, IPacket } from '../models/Packet';
 import { IncidentService } from './IncidentService';
 import type { RescuePacket } from '@rescuenet/shared';
 import { validatePacket } from '@rescuenet/shared';
+import mongoose from 'mongoose';
 
 export interface IngestPacketResult {
   success: boolean;
@@ -10,6 +11,9 @@ export interface IngestPacketResult {
   incidentId?: string;
   error?: string;
 }
+
+// In-memory fallback for offline/development mode when MongoDB is unavailable
+const inMemoryPackets: IPacket[] = [];
 
 export class PacketService {
   /**
@@ -28,9 +32,27 @@ export class PacketService {
       };
     }
 
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
     // 2. Deduplicate Check
-    const existing = await Packet.findOne({ packetId: packet.packetId }).exec();
-    if (existing) {
+    if (isMongoConnected) {
+      try {
+        const existing = await Packet.findOne({ packetId: packet.packetId }).exec();
+        if (existing) {
+          return {
+            success: false,
+            action: 'DROP_DUPLICATE',
+            packetId: packet.packetId,
+            error: 'Duplicate packet ID already exists',
+          };
+        }
+      } catch {
+        // Fallback to in-memory check
+      }
+    }
+
+    const existingInMemory = inMemoryPackets.find(p => p.packetId === packet.packetId);
+    if (existingInMemory) {
       return {
         success: false,
         action: 'DROP_DUPLICATE',
@@ -40,7 +62,7 @@ export class PacketService {
     }
 
     // 3. Save Packet
-    const newPacket = new Packet({
+    const packetData = {
       packetId: packet.packetId,
       senderId: packet.senderId,
       eventType: packet.eventType,
@@ -54,9 +76,18 @@ export class PacketService {
       authMetadata: packet.authMetadata,
       createdAt: packet.createdAt,
       receivedAt: new Date(),
-    });
+    };
 
-    await newPacket.save();
+    if (isMongoConnected) {
+      try {
+        const newPacket = new Packet(packetData);
+        await newPacket.save();
+      } catch {
+        inMemoryPackets.unshift(packetData as any);
+      }
+    } else {
+      inMemoryPackets.unshift(packetData as any);
+    }
 
     // 4. Create or Update Incident
     let incidentId: string | undefined;
@@ -67,7 +98,7 @@ export class PacketService {
 
     // 5. Emit Socket.IO event
     if (io) {
-      io.emit('new_packet', newPacket);
+      io.emit('new_packet', packetData);
       io.emit('emergency_packet', packet);
     }
 
@@ -83,6 +114,13 @@ export class PacketService {
    * Lists all packets with pagination.
    */
   static async getPackets(limit = 100): Promise<IPacket[]> {
-    return await Packet.find().sort({ receivedAt: -1 }).limit(limit).exec();
+    if (mongoose.connection.readyState === 1) {
+      try {
+        return await Packet.find().sort({ receivedAt: -1 }).limit(limit).exec();
+      } catch {
+        return inMemoryPackets.slice(0, limit);
+      }
+    }
+    return inMemoryPackets.slice(0, limit);
   }
 }
