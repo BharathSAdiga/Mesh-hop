@@ -17,25 +17,36 @@ export function deserializePacket(data: string): RescuePacket {
 export async function calculatePacketHash(packet: RescuePacket): Promise<string> {
   const payload = `${packet.packetId}:${packet.senderId}:${packet.eventType}:${packet.timestamp}:${packet.anomalyScore}:${packet.priority}`;
   
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.subtle) {
     const encoder = new TextEncoder();
     const data = encoder.encode(payload);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
   
-  // Fallback for environments without Web Crypto API (e.g. older node during tests without jsdom)
-  // In a pure browser-first app, crypto.subtle is preferred.
-  // For simplicity if crypto.subtle is absent (rare in modern browsers), we throw.
-  throw new Error('Web Crypto API not available for hashing.');
+  // Fast deterministic fallback for non-crypto runtime environments
+  let hash = 0;
+  for (let i = 0; i < payload.length; i++) {
+    const char = payload.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return `h_${Math.abs(hash).toString(16)}`;
+}
+
+export async function verifyPacketIntegrity(packet: RescuePacket): Promise<boolean> {
+  if (!packet.authMetadata?.hash) {
+    return false;
+  }
+  const calculated = await calculatePacketHash(packet);
+  return packet.authMetadata.hash === calculated;
 }
 
 export function generateSenderId(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return `device_${crypto.randomUUID()}`;
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.randomUUID) {
+    return `device_${globalThis.crypto.randomUUID()}`;
   }
-  // Fallback if randomUUID is missing
   return `device_${Math.random().toString(36).substring(2, 15)}`;
 }
 
@@ -48,7 +59,7 @@ export async function createPacket(params: {
   ttl?: number;
   location?: Location;
 }): Promise<RescuePacket> {
-  const packetId = `pkt_${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)}`;
+  const packetId = `pkt_${typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).substring(2, 15)}`;
   
   const packet: RescuePacket = {
     packetId,
@@ -67,7 +78,6 @@ export async function createPacket(params: {
   const hash = await calculatePacketHash(packet);
   packet.authMetadata = { hash };
   
-  // Final validation against our schema
   return validatePacket(packet);
 }
 
