@@ -51,6 +51,9 @@ export function MainLayout() {
           <Link to="/store-carry-forward" className="text-amber-600 flex flex-col items-center">
              <span className="text-xs font-medium mt-1">Routing</span>
           </Link>
+          <Link to="/gateway-simulator" className="text-cyan-600 flex flex-col items-center">
+             <span className="text-xs font-medium mt-1">Gateway</span>
+          </Link>
         </nav>
       )}
     </div>
