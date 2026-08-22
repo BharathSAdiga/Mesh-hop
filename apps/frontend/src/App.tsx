@@ -14,6 +14,7 @@ import { ConsensusSimulator } from './pages/ConsensusSimulator';
 import { TransportSimulator } from './pages/TransportSimulator';
 import { StoreCarryForwardSimulator } from './pages/StoreCarryForwardSimulator';
 import { GatewaySimulator } from './pages/GatewaySimulator';
+import { CommandCenter } from './pages/CommandCenter';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
+          <Route path="command-center" element={<CommandCenter />} />
           <Route path="sos" element={<SOS />} />
           <Route path="report" element={<Report />} />
           <Route path="alerts" element={<Alerts />} />
