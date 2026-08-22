@@ -1,47 +1,74 @@
-import app from './app';
 import http from 'http';
 import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { Priority } from '@rescuenet/shared'; // just to verify shared package works
+import { createApp } from './app';
+import { PacketService } from './services/PacketService';
+import { NodeRegistryService } from './services/NodeRegistryService';
 
 dotenv.config({ path: '../../.env' });
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rescuenet';
 
-const server = http.createServer(app);
+const server = http.createServer();
 const io = new Server(server, {
   cors: {
-    origin: '*',
-  }
+    origin: process.env.CORS_ORIGIN || '*',
+  },
 });
 
-io.on('connection', (socket) => {
-  console.log(`[Backend] Gateway/Client connected: ${socket.id}`);
+const app = createApp(io);
+server.on('request', app);
 
-  socket.on('emergency_packet', (packet) => {
-    console.log(`[Backend] Received packet: ${packet.packetId}`);
-    // Broadcast back to command center or other gateways
-    io.emit('emergency_packet', packet);
+io.on('connection', (socket) => {
+  console.log(`[Backend Socket] Client/Gateway connected: ${socket.id}`);
+
+  // When a gateway forwards an emergency packet over Socket.io
+  socket.on('emergency_packet', async (packet, callback) => {
+    console.log(`[Backend Socket] Received packet: ${packet?.packetId}`);
+    try {
+      const result = await PacketService.ingestPacket(packet, io);
+      if (callback) {
+        callback(result);
+      }
+    } catch (err: any) {
+      if (callback) {
+        callback({ success: false, error: err?.message });
+      }
+    }
+  });
+
+  // Gateway status heartbeat over Socket.io
+  socket.on('gateway_heartbeat', async (data) => {
+    if (data && data.gatewayId) {
+      await NodeRegistryService.updateGatewayHeartbeat(data.gatewayId, data, io);
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Backend] Disconnected: ${socket.id}`);
+    console.log(`[Backend Socket] Disconnected: ${socket.id}`);
   });
 });
 
 async function startServer() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log(`[Backend] Connected to MongoDB at ${MONGODB_URI}`);
-
-    server.listen(PORT, () => {
-      console.log(`[Backend] Server listening on port ${PORT}`);
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 3000,
     });
+    console.log(`[Backend DB] Connected to MongoDB at ${MONGODB_URI}`);
   } catch (err) {
-    console.error(`[Backend] Failed to start:`, err);
+    console.warn(`[Backend DB] MongoDB connection skipped or failed: ${err}. Running with in-memory fallbacks.`);
   }
+
+  server.listen(PORT, () => {
+    console.log(`[Backend] RescuENet Command Center API listening on http://localhost:${PORT}`);
+    console.log(`[Backend] Socket.IO server active on port ${PORT}`);
+  });
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+export { server, io };

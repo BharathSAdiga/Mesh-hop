@@ -1,13 +1,144 @@
 import express from 'express';
 import cors from 'cors';
+import { PacketService } from './services/PacketService';
+import { IncidentService } from './services/IncidentService';
+import { ObservationService } from './services/ObservationService';
+import { NodeRegistryService } from './services/NodeRegistryService';
 
-const app = express();
+export function createApp(io?: any) {
+  const app = express();
 
-app.use(cors());
-app.use(express.json());
+  app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+  app.use(express.json());
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'rescuenet-backend' });
-});
+  // GET /api/health
+  app.get(['/health', '/api/health'], (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      service: 'rescuenet-backend',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  });
 
-export default app;
+  // POST /api/packets
+  app.post('/api/packets', async (req, res) => {
+    try {
+      const result = await PacketService.ingestPacket(req.body, io);
+      if (result.success) {
+        res.status(201).json(result);
+      } else if (result.action === 'DROP_DUPLICATE') {
+        res.status(409).json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Internal server error' });
+    }
+  });
+
+  // GET /api/packets
+  app.get('/api/packets', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string, 10) || 50;
+      const packets = await PacketService.getPackets(limit);
+      res.status(200).json({ count: packets.length, packets });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // GET /api/incidents
+  app.get('/api/incidents', async (req, res) => {
+    try {
+      const { status, eventType } = req.query;
+      const limit = parseInt(req.query.limit as string, 10) || 50;
+      const incidents = await IncidentService.getIncidents({
+        status: status as string,
+        eventType: eventType as string,
+        limit,
+      });
+      res.status(200).json({ count: incidents.length, incidents });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // GET /api/incidents/:id
+  app.get('/api/incidents/:id', async (req, res) => {
+    try {
+      const incident = await IncidentService.getIncidentById(req.params.id);
+      if (!incident) {
+        res.status(404).json({ success: false, error: 'Incident not found' });
+        return;
+      }
+      res.status(200).json({ success: true, incident });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // POST /api/observations
+  app.post('/api/observations', async (req, res) => {
+    try {
+      const result = await ObservationService.ingestObservation(req.body, io);
+      if (result.success) {
+        res.status(201).json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // GET /api/observations
+  app.get('/api/observations', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string, 10) || 50;
+      const observations = await ObservationService.getObservations(limit);
+      res.status(200).json({ count: observations.length, observations });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // GET /api/gateways
+  app.get('/api/gateways', async (req, res) => {
+    try {
+      const gateways = await NodeRegistryService.getGateways();
+      res.status(200).json({ count: gateways.length, gateways });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // POST /api/gateways/heartbeat
+  app.post('/api/gateways/heartbeat', async (req, res) => {
+    try {
+      const { gatewayId, name, status, metrics, location } = req.body;
+      if (!gatewayId) {
+        res.status(400).json({ success: false, error: 'gatewayId is required' });
+        return;
+      }
+      const gateway = await NodeRegistryService.updateGatewayHeartbeat(gatewayId, { name, status, metrics, location }, io);
+      res.status(200).json({ success: true, gateway });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // GET /api/nodes
+  app.get('/api/nodes', async (req, res) => {
+    try {
+      const nodes = await NodeRegistryService.getNodes();
+      res.status(200).json({ count: nodes.length, nodes });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  return app;
+}
+
+export default createApp();
