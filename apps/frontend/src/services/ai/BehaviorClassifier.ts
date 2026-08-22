@@ -1,5 +1,5 @@
-import { BehaviorPattern } from '@rescuenet/shared';
-import { NormalizedFeatures } from './FeatureNormalizer';
+import type { BehaviorPattern } from '@rescuenet/shared';
+import type { NormalizedFeatures } from './FeatureNormalizer';
 
 export interface ClassificationResult {
   pattern: BehaviorPattern;

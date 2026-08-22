@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ConsensusEngine } from '../ConsensusEngine';
-import { RescuePacket } from '@rescuenet/shared';
+import type { RescuePacket } from '@rescuenet/shared';
 
 describe('ConsensusEngine', () => {
   let engine: ConsensusEngine;

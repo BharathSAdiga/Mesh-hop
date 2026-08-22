@@ -8,6 +8,11 @@ export const EventTypeSchema = z.enum([
   'FLOOD',
   'GENERAL_EMERGENCY',
   'BEHAVIORAL_ANOMALY',
+  'NORMAL',
+  'SUDDEN_IMPACT',
+  'RAPID_MOVEMENT',
+  'COLLAPSE_PATTERN',
+  'STAMPEDE_PATTERN',
 ]);
 
 export const BehaviorPatternSchema = z.enum([
@@ -16,6 +21,14 @@ export const BehaviorPatternSchema = z.enum([
   'RAPID_MOVEMENT',
   'COLLAPSE_PATTERN',
   'STAMPEDE_PATTERN',
+]);
+
+export const TransportStatusSchema = z.enum([
+  'connected',
+  'disconnected',
+  'connecting',
+  'unsupported',
+  'listening',
 ]);
 
 export const PrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);

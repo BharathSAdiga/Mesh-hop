@@ -1,4 +1,4 @@
-import { RescuePacket } from '@rescuenet/shared';
+import type { RescuePacket } from '@rescuenet/shared';
 
 // Distance calculation using Haversine formula
 function getDistanceFromLatLonInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {

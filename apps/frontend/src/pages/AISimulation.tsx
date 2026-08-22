@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { BehavioralAI } from '../services/ai/BehavioralAI';
-import { CandidateEvent } from '@rescuenet/shared';
+import type { CandidateEvent } from '@rescuenet/shared';
 
 export function AISimulation() {
   const [candidateEvent, setCandidateEvent] = useState<CandidateEvent | null>(null);

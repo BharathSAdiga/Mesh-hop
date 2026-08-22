@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { ConsensusEngine } from '../services/consensus/ConsensusEngine';
-import { ConsensusResult, RescuePacket } from '@rescuenet/shared';
+import type { ConsensusResult, RescuePacket } from '@rescuenet/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 export function ConsensusSimulator() {

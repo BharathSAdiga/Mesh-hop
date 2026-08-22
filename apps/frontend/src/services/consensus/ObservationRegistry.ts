@@ -1,4 +1,4 @@
-import { RescuePacket } from '@rescuenet/shared';
+import type { RescuePacket } from '@rescuenet/shared';
 
 export class ObservationRegistry {
   private observations: Map<string, RescuePacket> = new Map();

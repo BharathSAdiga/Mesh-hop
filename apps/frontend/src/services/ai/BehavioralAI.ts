@@ -1,5 +1,6 @@
-import { CandidateEvent } from '@rescuenet/shared';
-import { FeatureNormalizer, RawSensorData } from './FeatureNormalizer';
+import type { CandidateEvent } from '@rescuenet/shared';
+import { FeatureNormalizer } from './FeatureNormalizer';
+import type { RawSensorData } from './FeatureNormalizer';
 import { BehaviorClassifier } from './BehaviorClassifier';
 import { AnomalyDetector } from './AnomalyDetector';
 

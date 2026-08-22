@@ -1,5 +1,4 @@
-import { BehaviorPattern } from '@rescuenet/shared';
-import { ClassificationResult } from './BehaviorClassifier';
+import type { ClassificationResult } from './BehaviorClassifier';
 
 export class AnomalyDetector {
   public calculateScore(result: ClassificationResult): number {

@@ -1,4 +1,4 @@
-import { RescuePacket, ConsensusResult, ConsensusWeights } from '@rescuenet/shared';
+import type { RescuePacket, ConsensusResult, ConsensusWeights } from '@rescuenet/shared';
 import { ObservationRegistry } from './ObservationRegistry';
 import { SimilarityCalculator } from './SimilarityCalculator';
 
