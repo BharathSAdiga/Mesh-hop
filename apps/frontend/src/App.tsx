@@ -11,6 +11,7 @@ import { Demo } from './pages/Demo';
 import { OfflineQueue } from './pages/OfflineQueue';
 import { AISimulation } from './pages/AISimulation';
 import { ConsensusSimulator } from './pages/ConsensusSimulator';
+import { TransportSimulator } from './pages/TransportSimulator';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="demo" element={<Demo />} />
           <Route path="ai-simulation" element={<AISimulation />} />
           <Route path="consensus-simulator" element={<ConsensusSimulator />} />
+          <Route path="transport-simulator" element={<TransportSimulator />} />
           <Route path="queue" element={<OfflineQueue />} />
         </Route>
       </Routes>

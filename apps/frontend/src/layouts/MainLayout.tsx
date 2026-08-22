@@ -45,6 +45,9 @@ export function MainLayout() {
           <Link to="/consensus-simulator" className="text-emerald-500 flex flex-col items-center">
              <span className="text-xs font-medium mt-1">Consensus</span>
           </Link>
+          <Link to="/transport-simulator" className="text-purple-600 flex flex-col items-center">
+             <span className="text-xs font-medium mt-1">Mesh Hop</span>
+          </Link>
         </nav>
       )}
     </div>
