@@ -48,6 +48,9 @@ export function MainLayout() {
           <Link to="/transport-simulator" className="text-purple-600 flex flex-col items-center">
              <span className="text-xs font-medium mt-1">Mesh Hop</span>
           </Link>
+          <Link to="/store-carry-forward" className="text-amber-600 flex flex-col items-center">
+             <span className="text-xs font-medium mt-1">Routing</span>
+          </Link>
         </nav>
       )}
     </div>

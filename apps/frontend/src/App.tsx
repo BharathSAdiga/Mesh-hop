@@ -12,6 +12,7 @@ import { OfflineQueue } from './pages/OfflineQueue';
 import { AISimulation } from './pages/AISimulation';
 import { ConsensusSimulator } from './pages/ConsensusSimulator';
 import { TransportSimulator } from './pages/TransportSimulator';
+import { StoreCarryForwardSimulator } from './pages/StoreCarryForwardSimulator';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="ai-simulation" element={<AISimulation />} />
           <Route path="consensus-simulator" element={<ConsensusSimulator />} />
           <Route path="transport-simulator" element={<TransportSimulator />} />
+          <Route path="store-carry-forward" element={<StoreCarryForwardSimulator />} />
           <Route path="queue" element={<OfflineQueue />} />
         </Route>
       </Routes>
