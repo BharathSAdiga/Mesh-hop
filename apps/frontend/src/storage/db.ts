@@ -7,6 +7,7 @@ export type PacketState = 'PENDING' | 'TRANSMITTING' | 'DELIVERED' | 'FAILED' | 
 export interface StoredPacket extends EmergencyPacket {
   state: PacketState;
   retryCount: number;
+  lastAttemptAt?: number;
 }
 
 export interface StoredIncident {
